@@ -7,6 +7,9 @@ import os, math, time, collections, numpy as np
 3 = INFO, WARNING, and ERROR messages are not printed
 Disable Logs for now '''
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+os.environ["CUDA_VISIBLE_DEVICES"]='0' 
+
 import tensorflow as tf
 from tensorflow.python.util import deprecation
 deprecation._PRINT_DEPRECATION_WARNINGS = False
@@ -227,7 +230,11 @@ if FLAGS.mode == 'inference':
     init_op = tf.global_variables_initializer()
     local_init_op = tf.local_variables_initializer()
 
-    config = tf.ConfigProto()
+    #config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto(
+                   gpu_options=tf.compat.v1.GPUOptions(
+                   visible_device_list="0" # specify GPU number
+                ), allow_soft_placement=True, log_device_placement=True)
     config.gpu_options.allow_growth = True
     if (FLAGS.output_pre == ""):
         image_dir = FLAGS.output_dir
@@ -326,8 +333,16 @@ elif FLAGS.mode == 'train':
     print('Finish building the network.')
     
     # Start the session
-    config = tf.ConfigProto()
+    #config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto(
+                   gpu_options=tf.compat.v1.GPUOptions(
+                   visible_device_list="0" # specify GPU number
+                ), allow_soft_placement=True, log_device_placement=True)
+     
+    config.gpu_options.per_process_gpu_memory_fraction = 0.8
     config.gpu_options.allow_growth = True
+    tf.config.experimental.list_physical_devices('GPU')
+    print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
     # init_op = tf.initialize_all_variables() # MonitoredTrainingSession will initialize automatically
     with tf.train.MonitoredTrainingSession(config=config, save_summaries_secs=None, save_checkpoint_secs=None) as sess:
         train_writer = tf.summary.FileWriter(FLAGS.summary_dir, sess.graph)
@@ -373,8 +388,11 @@ elif FLAGS.mode == 'train':
                 raise ValueError('one of max_epoch or max_iter should be provided')
             else:
                 max_iter = FLAGS.max_epoch * rdata.steps_per_epoch
+
+        print('step  -- %d' % max_iter )
         try:
             for step in range(max_iter):
+                print('step %d/%d' % (step,max_iter) )
                 run_step = sess.run(Net.global_step) + 1
                 fetches = { "train": Net.train, "learning_rate": Net.learning_rate }
             

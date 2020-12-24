@@ -8,9 +8,16 @@ runcase == 3    training TecoGAN
 runcase == 4    training FRVSR
 runcase == ...  coming... data preparation and so on...
 '''
+
+# train scene_2000 -- scene_????
+start_train = "2000"
+end_train = "2030"
+end_validatin = "2049"
+
 import os, subprocess, sys, datetime, signal, shutil
 
 runcase = int(sys.argv[1])
+print ("Testing test case %d" % runcase)
 
 def preexec(): # Don't forward signals.
     os.setpgrp()
@@ -43,7 +50,7 @@ if( runcase == 0 ): # download inference data, trained models
 elif( runcase == 1 ): # inference a trained model
 
     dirstr = './results/' # the place to save the results
-    testpre = ['test'] # the test cases
+    testpre = ['calendar'] # the test cases
 
     if (not os.path.exists(dirstr)): os.mkdir(dirstr)
 
@@ -108,7 +115,8 @@ elif( runcase == 3 ): # Train TecoGAN
         cmd0 += "unzip model/ofrvsr.zip -d model; rm model/ofrvsr.zip"
         subprocess.call(cmd0, shell=True)
 
-    TrainingDataPath = "/mnt/netdisk/video_data/"
+#    TrainingDataPath = "/mnt/netdisk/video_data/" 
+    TrainingDataPath = "./train_data/" 
 
     '''Prepare Training Folder'''
     # path appendix, manually define it, or use the current datetime, now_str = "mm-dd-hh"
@@ -153,9 +161,11 @@ elif( runcase == 3 ): # Train TecoGAN
     cmd1 += [
         "--input_video_dir", TrainingDataPath,
         "--input_video_pre", "scene",
-        "--str_dir", "2000",
-        "--end_dir", "2250",
-        "--end_dir_val", "2290",
+        "--str_dir", start_train,
+        "##--end_dir", "2250",
+        "--end_dir", end_train,
+        "##--end_dir_val", "2290",
+        "--end_dir_val", end_validatin,
         "--max_frm", "119",
         # -- cpu memory for data loading --
         "--queue_thread", "12",# Cpu threads for the data. >4 to speedup the training

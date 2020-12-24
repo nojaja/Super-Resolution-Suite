@@ -170,6 +170,7 @@ def loadHR_batch(FLAGS, tar_size):
 def loadHR(FLAGS, tar_size):
     # a k_w_border margin should be in tar_size for Gaussian blur
     
+    print("call -> loadHR")
     with tf.device('/cpu:0'):
         #Check the input directory
         if (FLAGS.input_video_dir == ''):
