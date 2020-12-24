@@ -64,7 +64,8 @@ echo waifu2x split!splitid! !st!-!en!
 echo ----------------------------------
 mkdir %current_dir%LR\split!splitid!_2x
 rem waifu2x-caffe-cui --model_dir %current_dir%waifu2x-caffe/models/upconv_7_photo -i LR/split!splitid!/ -m noise --noise_level 3 -p cpu --tta 1 --model_type upconv_7_photo -o LR/split!splitid!_2x/
-waifu2x-ncnn-vulkan -m models-upconv_7_photo -i %current_dir%LR/split!splitid!/ -o %current_dir%LR/split!splitid!_2x/ -n 3 -s 1 -j 4,4,4 -x
+rem waifu2x-ncnn-vulkan -m models-upconv_7_photo -i %current_dir%LR/split!splitid!/ -o %current_dir%LR/split!splitid!_2x/ -n 3 -s 2 -j 4,4,4 -x
+waifu2x-ncnn-vulkan -m models-upconv_7_photo -i %current_dir%LR/split!splitid!/ -o %current_dir%LR/split!splitid!_2x/ -n 3 -s 2 -x
 
 :TecoGAN
 echo ----------------------------------
