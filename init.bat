@@ -59,13 +59,19 @@ tar -xf ./dist/tmp/model.zip -C ./dist/TecoGAN/model
 curl -o ./dist/tmp/ofrvsr.zip http://ge.in.tum.de/download/2019-TecoGAN/FRVSR_Ours.zip
 tar -xf ./dist/tmp/ofrvsr.zip -C ./dist/TecoGAN/model
 
-curl -L -o ./dist/tmp/waifu2x-ncnn-vulkan.zip https://github.com/nihui/waifu2x-ncnn-vulkan/releases/download/20200818/waifu2x-ncnn-vulkan-20200818-windows.zip
-rem tar -xf ./dist/tmp/waifu2x-ncnn-vulkan.zip -C ./dist/waifu2x
-7z x -aoa -o./dist/waifu2x_/ ./dist/tmp/waifu2x-ncnn-vulkan.zip
+rem curl -L -o ./dist/tmp/waifu2x-ncnn-vulkan.zip https://github.com/nihui/waifu2x-ncnn-vulkan/releases/download/20200818/waifu2x-ncnn-vulkan-20200818-windows.zip
+rem 7z x -aoa -o./dist/waifu2x_/ ./dist/tmp/waifu2x-ncnn-vulkan.zip
 
+rem for /d %i in (dist\waifu2x_\*) do (rename .\%i waifu2x)
+rem move /Y .\dist\waifu2x_\waifu2x .\dist\waifu2x
+rem rd .\dist\waifu2x_
+
+curl -L -o ./dist/tmp/waifu2x-caffe.zip https://github.com/lltcggie/waifu2x-caffe/releases/download/1.2.0.4/waifu2x-caffe.zip
+7z x -aoa -o./dist/waifu2x_/ ./dist/tmp/waifu2x-caffe.zip
 for /d %i in (dist\waifu2x_\*) do (rename .\%i waifu2x)
 move /Y .\dist\waifu2x_\waifu2x .\dist\waifu2x
 rd .\dist\waifu2x_
+
 
 curl -o ./dist/tmp/ffmpeg.7z https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-4.3.1-2020-11-19-full_build.7z
 7z x -aoa -o./dist/ffmpeg_/ ./dist/tmp/ffmpeg.7z
