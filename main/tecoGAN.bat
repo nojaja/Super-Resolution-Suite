@@ -11,6 +11,10 @@ cd tecoGAN
 set filename=%1
 echo filename : %filename%
 
+rem setting
+set vcodec=h264_nvenc
+
+
 rem GPU情報表示
 call :getgpu
 
@@ -23,6 +27,7 @@ for %%a in (%catalog_dir%*.ini) do (
  echo ==================================
  echo 処理開始 split!splitid! !st!-!en!
  echo ==================================
+ call :split
  call :encode
  set /a num+=1
 )
@@ -68,20 +73,22 @@ echo 分割箇所抽出
 echo ==================================
 IF NOT EXIST %catalog_dir%ffout (
 call :mdir %catalog_dir%
-ffmpeg -i %filename% -filter:v "select='gt(scene,0.2)',showinfo" -vcodec png -vsync 0 %catalog_dir%split%%02d.png 2>%catalog_dir%ffout
+ffmpeg -i %filename% -ss 0.1 -vframes 1 -vcodec png -vsync 0 -start_number 1 %catalog_dir%split%%02d.png
+ffmpeg -i %filename% -filter:v "select='gt(scene,0.2)',showinfo" -vcodec png -vsync 0 -start_number 2 %catalog_dir%split%%02d.png 2>%catalog_dir%ffout
 ) ELSE (
 echo ==================================
 echo 分割箇所抽出 skip
 echo ==================================
 )
 
-:pts_timeは精度が低いので自前で計算する
+rem pts_timeは精度が低いので自前で計算する
 grep showinfo %catalog_dir%ffout | grep "in time_base" | grep "time_base: 1/[0-9.]*" -o | grep [0-9.]*$ -o > %tmp_dir%time_base
 grep showinfo %catalog_dir%ffout | grep pts:[0-9.]* -o | grep [0-9.]* -o > %tmp_dir%timestamps
 grep Stream %catalog_dir%ffout | grep "Video: png" | grep "fps, [0-9.]*" -o | grep [0-9.]* -o > %tmp_dir%fps
 
 for /f "usebackq" %%A in (`type %tmp_dir%time_base`) do set time_base=%%A
 for /f "usebackq" %%A in (`type %tmp_dir%fps`) do set fps=%%A
+rem >> %tmp_dir%timestamps echo %time_base%
 echo -----------------------------
 echo time_base %time_base%
 echo fps %fps%
@@ -97,17 +104,18 @@ for /f "tokens=1" %%a in (%tmp_dir%timestamps) do (
  IF NOT EXIST %catalog_dir%split!splitid!.ini (
   set st=!en!
   for /f "usebackq" %%n in (`powershell -c "&{%%a/%time_base%}"`) do @set en=%%n
-
   set timestamps=%%a
   set frameCount=0
   call :saveini
+ ) else (
+  call :getini %catalog_dir%split!splitid!.ini
  )
  set /a num+=1
 )
 
 del %tmp_dir%time_base
 del %tmp_dir%fps
-del %tmp_dir%timestamps
+rem del %tmp_dir%timestamps
 exit /b
 
 
@@ -126,7 +134,11 @@ exit /b
   echo 画像抽出とframe数取得 split!splitid! !st!-!en!
   echo ----------------------------------
   call :mdir %current_dir%LR\split!splitid!
-  ffmpeg -y -i %filename% -vcodec png -ss !st! -to !en! %current_dir%LR\split!splitid!\image_%%05d.png
+  if /I !en! LEQ !st! (
+    ffmpeg -y -i %filename% -vcodec png -ss !st! -to !en! %current_dir%LR\split!splitid!\image_%%05d.png
+  ) else (
+    ffmpeg -y -i %filename% -vcodec png -ss !st! %current_dir%LR\split!splitid!\image_%%05d.png
+  )
   echo 画像ファイルの数からframe数取得
   dir /A-D /B "%current_dir%LR\split!splitid!" | find /c /v "" > %tmp_dir%frameCount
   for /f "usebackq" %%A in (`type %tmp_dir%frameCount`) do set frameCount=%%A
@@ -151,7 +163,6 @@ rem 2x画像ファイルの数からframe数取得
 dir /A-D /B "%current_dir%LR\split!splitid!_2x" | find /c /v "" > %tmp_dir%frameCount2x
 for /f "usebackq" %%A in (`type %tmp_dir%frameCount2x`) do set frameCount2x=%%A
 if /I !frameCount! NEQ !frameCount2x! (
- call :split
  echo -----------------------------
  echo waifu2x実行 split!splitid! !st!-!en! !frameCount! NEQ ファイル数:!frameCount2x!
  echo -----------------------------
@@ -202,7 +213,7 @@ IF NOT EXIST %current_dir%results/split!splitid!_2x.mp4 (
  echo -----------------------------
  echo ffmpeg実行 split!splitid! !st!-!en! NOT EXIST %current_dir%results/split!splitid!_2x.mp4 
  echo -----------------------------
- ffmpeg -y -r %fps% -i %current_dir%results/split!splitid!_2x/output_image_%%05d.png -vcodec h264_nvenc -pix_fmt yuv420p %current_dir%results/split!splitid!_2x.mp4 
+ ffmpeg -y -r %fps% -i %current_dir%results/split!splitid!_2x/output_image_%%05d.png -vcodec %vcodec% -pix_fmt yuv420p %current_dir%results/split!splitid!_2x.mp4 
 ) ELSE (
  echo -----------------------------
  echo ffmpegスキップ split!splitid! !st!-!en! EXIST %current_dir%results/split!splitid!_2x.mp4 
